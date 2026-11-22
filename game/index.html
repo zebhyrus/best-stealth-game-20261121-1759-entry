@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Night Curator — a stealth game</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="wrap">
+  <header id="hud">
+    <div class="hud-left">
+      <span id="hud-level">Level 1 · The Marble Hall</span>
+      <span id="hud-objective">Steal the Star Sapphire, then reach the exit.</span>
+    </div>
+    <div class="hud-mid">
+      <span id="hud-loot" title="Loot collected">◆ 0</span>
+      <span id="hud-coins" title="Brass coins to throw">◉ 3</span>
+      <span id="hud-lives" title="Lives">♥♥♥</span>
+    </div>
+    <div class="hud-right">
+      <span id="hud-suspicion-label">SPOTTED</span>
+      <div id="suspicion-bar"><div id="suspicion-fill"></div></div>
+      <button id="mute-btn" title="Mute (M)">♪</button>
+    </div>
+  </header>
+  <div id="stage">
+    <canvas id="game" width="1000" height="640"></canvas>
+    <div id="overlay" class="overlay"></div>
+  </div>
+  <footer id="help">
+    <span><b>WASD / ←↑→↓</b> move</span>
+    <span><b>Shift</b> sneak (slow, quiet, hard to see)</span>
+    <span><b>Click</b> throw a brass coin to distract</span>
+    <span>walk over gems to grab them</span>
+    <span>Stay out of the yellow cones · shadows hide you · running is loud</span>
+  </footer>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
