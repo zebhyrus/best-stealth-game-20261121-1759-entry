@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>The Night Curator — a stealth game</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -27,11 +27,20 @@
   <div id="stage">
     <canvas id="game" width="1000" height="640"></canvas>
     <div id="overlay" class="overlay"></div>
+    <div id="touch-ui">
+      <div id="stick" aria-label="Move"><div id="stick-knob"></div></div>
+      <div id="touch-buttons">
+        <button id="btn-sneak" class="touch-btn" type="button">SNEAK</button>
+        <button id="btn-coin" class="touch-btn" type="button">COIN</button>
+        <button id="btn-pause" class="touch-btn" type="button" aria-label="Pause">II</button>
+      </div>
+    </div>
   </div>
   <footer id="help">
-    <span><b>WASD / ←↑→↓</b> move</span>
-    <span><b>Shift</b> sneak (slow, quiet, hard to see)</span>
-    <span><b>Click</b> throw a brass coin to distract</span>
+    <span class="kb"><b>WASD / ←↑→↓</b> move</span>
+    <span class="kb"><b>Shift</b> sneak (slow, quiet, hard to see)</span>
+    <span class="kb"><b>Click</b> throw a brass coin to distract</span>
+    <span class="touch-only"><b>Joystick</b> move · <b>SNEAK</b> sneak · <b>COIN</b> throw a coin ahead · tap the floor to throw at a spot</span>
     <span>walk over gems to grab them</span>
     <span>Stay out of the yellow cones · shadows hide you · running is loud</span>
   </footer>

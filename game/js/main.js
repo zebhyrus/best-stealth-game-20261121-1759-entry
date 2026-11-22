@@ -98,8 +98,9 @@ function showMenu() {
     The guards walk their rounds under the torches. Learn their patrols,
     slip through the shadows, steal the glowing artifact and leave by the
     green EXIT — unseen.</p>
-    <p class="keys"><b>WASD / arrows</b> move &nbsp;·&nbsp; <b>Shift</b> sneak &nbsp;·&nbsp;
-    <b>Click</b> throw a coin to distract &nbsp;·&nbsp; walk over gems to grab them</p>
+    <p class="keys">${isTouchDevice
+      ? '<b>Joystick</b> move &nbsp;·&nbsp; <b>SNEAK</b> sneak &nbsp;·&nbsp; <b>COIN</b> throw a coin ahead &nbsp;·&nbsp; tap the floor to throw at a spot'
+      : '<b>WASD / arrows</b> move &nbsp;·&nbsp; <b>Shift</b> sneak &nbsp;·&nbsp; <b>Click</b> throw a coin to distract &nbsp;·&nbsp; walk over gems to grab them'}</p>
     <p class="keys">Yellow cones are a guard's sight. A full suspicion meter raises the
     alarm — break line of sight and hide until they give up. Running is loud.</p>
     <button class="big-btn" id="start-btn">BEGIN THE HEIST</button>
@@ -261,11 +262,18 @@ function update(dt) {
 }
 
 let last = performance.now();
+let touchShown = false;
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   update(dt);
   drawGame(ctx, game);
+  // Touch controls are only on screen while actually playing.
+  const showTouch = game.state === 'playing';
+  if (showTouch !== touchShown) {
+    touchShown = showTouch;
+    touchUI.classList.toggle('on', showTouch);
+  }
   if (game.caughtFlash > 0) {
     game.caughtFlash = Math.max(0, game.caughtFlash - dt * 2);
     ctx.fillStyle = `rgba(255,40,40,${game.caughtFlash * 0.25})`;
@@ -284,6 +292,7 @@ const KEYMAP = {
 };
 window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyM') { toggleMute(); return; }
+  if (e.code === 'Escape') { togglePause(); return; }
   const k = KEYMAP[e.code];
   if (k) { input[k] = true; e.preventDefault(); }
   if (e.code === 'Enter' && game.state === 'menu') {
@@ -295,12 +304,8 @@ window.addEventListener('keyup', (e) => {
   const k = KEYMAP[e.code];
   if (k) input[k] = false;
 });
-canvas.addEventListener('mousedown', (e) => {
-  sounds.ensure();
+function throwCoinAt(tx, ty) {
   if (game.state !== 'playing') return;
-  const rect = canvas.getBoundingClientRect();
-  const tx = (e.clientX - rect.left) * (canvas.width / rect.width);
-  const ty = (e.clientY - rect.top) * (canvas.height / rect.height);
   const dx = tx - game.player.x;
   const dy = ty - game.player.y;
   const dist = Math.hypot(dx, dy);
@@ -316,13 +321,124 @@ canvas.addEventListener('mousedown', (e) => {
     };
     updateHud();
   }
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  sounds.ensure();
+  if (game.state !== 'playing') return;
+  const rect = canvas.getBoundingClientRect();
+  const tx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const ty = (e.clientY - rect.top) * (canvas.height / rect.height);
+  throwCoinAt(tx, ty);
 });
+// Tap the floor on a touch screen: same throw as a mouse click, at the
+// tapped point. preventDefault stops the synthetic mousedown so the coin
+// is only thrown once.
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  sounds.ensure();
+  if (game.state !== 'playing') return;
+  const t = e.changedTouches[0];
+  const rect = canvas.getBoundingClientRect();
+  const tx = (t.clientX - rect.left) * (canvas.width / rect.width);
+  const ty = (t.clientY - rect.top) * (canvas.height / rect.height);
+  throwCoinAt(tx, ty);
+}, { passive: false });
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
 function toggleMute() {
   sounds.ensure();
   sounds.setMuted(!sounds.muted);
   document.getElementById('mute-btn').classList.toggle('muted', sounds.muted);
 }
+
+// ---- Touch controls (phones/tablets) ----
+// Every touch control writes the SAME `input` flags the keyboard writes,
+// so the game logic (player.js, guards.js) is untouched.
+const touchUI = document.getElementById('touch-ui');
+const isTouchDevice =
+  window.matchMedia('(pointer: coarse)').matches ||
+  'ontouchstart' in window ||
+  navigator.maxTouchPoints > 0;
+if (isTouchDevice) document.documentElement.classList.add('touch');
+
+// Virtual joystick: 8-way movement. The stick's deflection maps to the
+// four direction flags, exactly like holding WASD/arrows.
+const stick = document.getElementById('stick');
+const knob = document.getElementById('stick-knob');
+let stickPointer = null;
+function stickUpdate(e) {
+  const rect = stick.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  let dx = (e.clientX - cx) / (rect.width / 2);
+  let dy = (e.clientY - cy) / (rect.height / 2);
+  const len = Math.hypot(dx, dy);
+  if (len > 1) { dx /= len; dy /= len; }
+  knob.style.transform = `translate(${dx * 34}px, ${dy * 34}px)`;
+  const dead = 0.3;
+  input.left = dx < -dead;
+  input.right = dx > dead;
+  input.up = dy < -dead;
+  input.down = dy > dead;
+}
+function stickReset() {
+  stickPointer = null;
+  knob.style.transform = 'translate(0, 0)';
+  input.left = input.right = input.up = input.down = false;
+}
+stick.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  stickPointer = e.pointerId;
+  try { stick.setPointerCapture(e.pointerId); } catch (_) { /* synthetic pointer: no capture */ }
+  stickUpdate(e);
+});
+stick.addEventListener('pointermove', (e) => {
+  if (e.pointerId === stickPointer) stickUpdate(e);
+});
+stick.addEventListener('pointerup', (e) => {
+  if (e.pointerId === stickPointer) stickReset();
+});
+stick.addEventListener('pointercancel', (e) => {
+  if (e.pointerId === stickPointer) stickReset();
+});
+
+// SNEAK is a toggle on touch (holding Shift with one thumb while steering
+// with the other is not practical). It sets the same input.sneak flag.
+const sneakBtn = document.getElementById('btn-sneak');
+sneakBtn.addEventListener('click', () => {
+  input.sneak = !input.sneak;
+  sneakBtn.classList.toggle('active', input.sneak);
+});
+
+// COIN throws a brass coin 280 px ahead in the direction Wren faces —
+// the same throwCoinAt() the mouse click uses.
+document.getElementById('btn-coin').addEventListener('click', () => {
+  sounds.ensure();
+  const p = game.player;
+  if (!p) return;
+  throwCoinAt(p.x + Math.cos(p.dir) * 280, p.y + Math.sin(p.dir) * 280);
+});
+
+// Pause: freezing the update loop (update() already returns early unless
+// the state is 'playing') while the world keeps drawing underneath.
+function resumeGame() {
+  hideOverlay();
+  game.state = 'playing';
+}
+function togglePause() {
+  if (game.state === 'playing') {
+    game.state = 'paused';
+    showOverlay(`
+      <h2>PAUSED</h2>
+      <p>Wren waits in the dark. The guards keep their rounds.</p>
+      <button class="big-btn" id="resume-btn">RESUME</button>
+    `);
+    document.getElementById('resume-btn').addEventListener('click', resumeGame);
+  } else if (game.state === 'paused') {
+    resumeGame();
+  }
+}
+document.getElementById('btn-pause').addEventListener('click', togglePause);
 
 // ---- Boot ----
 const params = new URLSearchParams(window.location.search);

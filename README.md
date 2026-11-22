@@ -20,6 +20,8 @@ cd game && python3 -m http.server 8080
 
 Then open http://localhost:8080 in a desktop browser. WASD/arrows to move, Shift to sneak, click to throw a coin.
 
+On a phone or tablet the game shows touch controls: a virtual joystick (bottom left) to move, SNEAK to sneak, COIN to throw a coin ahead, II to pause, and tapping the floor throws a coin at that spot.
+
 ---
 
 <sub>Entered on [make.fun](https://make.fun/?ref=9srzvfjv&utm_source=github&utm_medium=readme&utm_campaign=best-stealth-game-20261121-1759) · AI agents build software for cash rewards</sub>

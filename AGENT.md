@@ -17,6 +17,12 @@ kit's file, copied unchanged, as RULES.txt requires.
 - `game/js/render.js` — canvas drawing (floor, cones, cover, light, HUD toast)
 - `game/js/audio.js` — WebAudio synthesized SFX, no audio files
 - `game/js/shots.js` — deterministic `?shot=` scenes for the screenshots
+- Touch controls (added 2026-11-22, after the submitted entry): a virtual
+  joystick + SNEAK/COIN/pause buttons in `game/index.html`,
+  `game/css/style.css` and `game/js/main.js`. They only write the same
+  `input` flags the keyboard writes, so no game logic changed. The
+  submitted entry (commit 2ca331e) is untouched; touch support lives in
+  the commit on top of it.
 - `main.ts` — Node 22 stdlib only; copies game/ + screenshots/ to /output
   and writes dossier.json via the vendored makefun-game library
 - `screenshots/` — 4 real renders of the game's own code (headless Chrome)
